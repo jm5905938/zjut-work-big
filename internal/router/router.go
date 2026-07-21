@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jm5905938/zjut-work-big/internal/middleware"
+	"github.com/jm5905938/zjut-work-big/internal/response"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -14,17 +16,19 @@ type Dependencies struct {
 }
 
 func New(deps Dependencies) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(
+		gin.Logger(),
+		middleware.Recovery(),
+		middleware.ErrorHandler(),
+	)
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"code": 0,
-			"msg":  "success",
-			"data": gin.H{
-				"status": "healthy",
-				"mysql":  "connected",
-				"redis":  "connected",
-			},
+		response.Success(c, http.StatusOK, gin.H{
+			"status": "healthy",
+			"mysql":  "connected",
+			"redis":  "connected",
 		})
 	})
 

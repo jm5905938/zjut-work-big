@@ -24,6 +24,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if err := database.Migrate(db); err != nil {
+		log.Fatal(err)
+	}
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Fatal(err)
