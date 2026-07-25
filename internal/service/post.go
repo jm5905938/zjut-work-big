@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/jm5905938/zjut-work-big/internal/apperror"
 	"github.com/jm5905938/zjut-work-big/internal/dto"
 	"github.com/jm5905938/zjut-work-big/internal/model"
+	"gorm.io/gorm"
 )
 
 type PostRepository interface {
@@ -17,6 +19,7 @@ type PostRepository interface {
 		page int,
 		pageSize int,
 	) ([]model.Post, int64, error)
+	FindDetailByID(ctx context.Context, id uint64) (*model.Post, error)
 }
 
 type PostService struct {
@@ -62,6 +65,52 @@ func (s *PostService) Create(
 			Role:     createdPost.Author.Role,
 		},
 		CreatedAt: createdPost.CreatedAt,
+	}, nil
+}
+
+func (s *PostService) GetByID(
+	ctx context.Context,
+	postID uint64,
+) (dto.PostDetailResponse, error) {
+	post, err := s.posts.FindDetailByID(ctx, postID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.PostDetailResponse{},
+				apperror.NotFound("帖子不存在")
+		}
+
+		return dto.PostDetailResponse{}, apperror.Internal(err)
+	}
+
+	comments := make([]dto.CommentResponse, 0, len(post.Comments))
+	for _, comment := range post.Comments {
+		comments = append(comments, dto.CommentResponse{
+			ID:      comment.ID,
+			PostID:  comment.PostID,
+			Content: comment.Content,
+			Author: dto.UserResponse{
+				ID:       comment.Author.ID,
+				Username: comment.Author.Username,
+				Name:     comment.Author.Name,
+				Role:     comment.Author.Role,
+			},
+			CreatedAt: comment.CreatedAt,
+		})
+	}
+
+	return dto.PostDetailResponse{
+		ID:      post.ID,
+		Content: post.Content,
+		Author: dto.UserResponse{
+			ID:       post.Author.ID,
+			Username: post.Author.Username,
+			Name:     post.Author.Name,
+			Role:     post.Author.Role,
+		},
+		LikeCount:    post.LikeCount,
+		CommentCount: post.CommentCount,
+		CreatedAt:    post.CreatedAt,
+		Comments:     comments,
 	}, nil
 }
 

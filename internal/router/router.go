@@ -16,6 +16,7 @@ type AuthHandler interface {
 type PostHandler interface {
 	Create(c *gin.Context)
 	List(c *gin.Context)
+	GetByID(c *gin.Context)
 }
 
 type Dependencies struct {
@@ -50,6 +51,7 @@ func New(deps Dependencies) *gin.Engine {
 	posts.Use(middleware.Auth(deps.Tokens))
 	posts.POST("", deps.Posts.Create)
 	posts.GET("", deps.Posts.List)
+	posts.GET("/:post_id", deps.Posts.GetByID)
 
 	return r
 }

@@ -13,6 +13,7 @@ type Post struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	LikeCount    int64 `gorm:"->;-:migration" json:"like_count"`
-	CommentCount int64 `gorm:"->;-:migration" json:"comment_count"`
+	LikeCount    int64     `gorm:"->;-:migration" json:"like_count"`
+	CommentCount int64     `gorm:"->;-:migration" json:"comment_count"`
+	Comments     []Comment `gorm:"foreignKey:PostID" json:"comments"`
 }

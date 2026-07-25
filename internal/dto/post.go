@@ -38,3 +38,21 @@ type PostListResponse struct {
 	Items []PostListItemResponse `json:"items"`
 	Meta  PaginationMeta         `json:"meta"`
 }
+
+type CommentResponse struct {
+	ID        uint64       `json:"id"`
+	PostID    uint64       `json:"post_id"`
+	Content   string       `json:"content"`
+	Author    UserResponse `json:"author"`
+	CreatedAt time.Time    `json:"created_at"`
+}
+
+type PostDetailResponse struct {
+	ID           uint64            `json:"id"`
+	Content      string            `json:"content"`
+	Author       UserResponse      `json:"author"`
+	LikeCount    int64             `json:"like_count"`
+	CommentCount int64             `json:"comment_count"`
+	CreatedAt    time.Time         `json:"created_at"`
+	Comments     []CommentResponse `json:"comments"`
+}

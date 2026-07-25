@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jm5905938/zjut-work-big/internal/apperror"
@@ -21,6 +22,10 @@ type PostService interface {
 		ctx context.Context,
 		query dto.ListPostsQuery,
 	) (dto.PostListResponse, error)
+	GetByID(
+		ctx context.Context,
+		postID uint64,
+	) (dto.PostDetailResponse, error)
 }
 
 type PostHandler struct {
@@ -80,4 +85,20 @@ func (h *PostHandler) List(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, posts)
+}
+
+func (h *PostHandler) GetByID(c *gin.Context) {
+	postID, err := strconv.ParseUint(c.Param("post_id"), 10, 64)
+	if err != nil || postID == 0 {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	post, err := h.posts.GetByID(c.Request.Context(), postID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, post)
 }

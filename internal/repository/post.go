@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const postWithCountsSelect = `posts.*,
+	(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count,
+	(SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) AS comment_count`
+
 type PostRepository struct {
 	db *gorm.DB
 }
@@ -53,9 +57,7 @@ func (r *PostRepository) List(
 	}
 
 	err := db.
-		Select(`posts.*,
-			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count,
-			(SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) AS comment_count`).
+		Select(postWithCountsSelect).
 		Preload("Author").
 		Order("posts.created_at DESC").
 		Order("posts.id DESC").
@@ -67,4 +69,28 @@ func (r *PostRepository) List(
 	}
 
 	return posts, total, nil
+}
+
+func (r *PostRepository) FindDetailByID(
+	ctx context.Context,
+	id uint64,
+) (*model.Post, error) {
+	var post model.Post
+
+	err := r.db.WithContext(ctx).
+		Model(&model.Post{}).
+		Select(postWithCountsSelect).
+		Preload("Author").
+		Preload("Comments", func(db *gorm.DB) *gorm.DB {
+			return db.
+				Order("comments.created_at ASC").
+				Order("comments.id ASC")
+		}).
+		Preload("Comments.Author").
+		First(&post, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &post, nil
 }
