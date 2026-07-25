@@ -12,6 +12,7 @@ import (
 	"github.com/jm5905938/zjut-work-big/internal/repository"
 	"github.com/jm5905938/zjut-work-big/internal/router"
 	"github.com/jm5905938/zjut-work-big/internal/service"
+	"github.com/jm5905938/zjut-work-big/internal/token"
 )
 
 func main() {
@@ -48,7 +49,8 @@ func main() {
 	}()
 
 	userRepository := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepository)
+	tokenManager := token.NewJWTManager(cfg.JWTSecret, cfg.JWTExpiresIn)
+	authService := service.NewAuthService(userRepository, tokenManager)
 	authHandler := handler.NewAuthHandler(authService)
 
 	r := router.New(router.Dependencies{

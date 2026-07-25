@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -19,6 +20,9 @@ type Config struct {
 	RedisPort     string
 	RedisPassword string
 	RedisDB       int
+
+	JWTSecret    string
+	JWTExpiresIn time.Duration
 }
 
 func Load() (*Config, error) {
@@ -33,6 +37,7 @@ func Load() (*Config, error) {
 	v.SetDefault("REDIS_HOST", "127.0.0.1")
 	v.SetDefault("REDIS_PORT", "6379")
 	v.SetDefault("REDIS_DB", 0)
+	v.SetDefault("JWT_EXPIRES_IN", "2h")
 
 	v.AutomaticEnv()
 
@@ -53,6 +58,9 @@ func Load() (*Config, error) {
 		RedisPort:     v.GetString("REDIS_PORT"),
 		RedisPassword: v.GetString("REDIS_PASSWORD"),
 		RedisDB:       v.GetInt("REDIS_DB"),
+
+		JWTSecret:    v.GetString("JWT_SECRET"),
+		JWTExpiresIn: v.GetDuration("JWT_EXPIRES_IN"),
 	}
 
 	if cfg.MySQLDatabase == "" ||
@@ -63,6 +71,10 @@ func Load() (*Config, error) {
 
 	if cfg.RedisPassword == "" {
 		return nil, fmt.Errorf("Redis 配置不完整")
+	}
+
+	if cfg.JWTSecret == "" || cfg.JWTExpiresIn <= 0 {
+		return nil, fmt.Errorf("JWT 配置不完整")
 	}
 
 	return cfg, nil

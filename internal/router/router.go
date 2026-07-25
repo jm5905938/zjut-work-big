@@ -10,6 +10,7 @@ import (
 
 type AuthHandler interface {
 	Register(c *gin.Context)
+	Login(c *gin.Context)
 }
 
 type Dependencies struct {
@@ -36,6 +37,7 @@ func New(deps Dependencies) *gin.Engine {
 	api := r.Group("/api/v1")
 	auth := api.Group("/auth")
 	auth.POST("/register", deps.Auth.Register)
+	auth.POST("/login", deps.Auth.Login)
 
 	return r
 }

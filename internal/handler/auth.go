@@ -15,6 +15,10 @@ type AuthService interface {
 		ctx context.Context,
 		req dto.RegisterRequest,
 	) (dto.UserResponse, error)
+	Login(
+		ctx context.Context,
+		req dto.LoginRequest,
+	) (dto.LoginData, error)
 }
 
 type AuthHandler struct {
@@ -47,4 +51,21 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, user)
+}
+
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req dto.LoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	loginData, err := h.auth.Login(c.Request.Context(), req)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, loginData)
 }
