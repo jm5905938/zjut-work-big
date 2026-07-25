@@ -36,6 +36,11 @@ type PostService interface {
 		postID uint64,
 		userID uint64,
 	) (dto.LikePostResponse, error)
+	GetLikeStatuses(
+		ctx context.Context,
+		userID uint64,
+		req dto.GetLikeStatusesRequest,
+	) (dto.GetLikeStatusesResponse, error)
 }
 
 type PostHandler struct {
@@ -164,4 +169,31 @@ func (h *PostHandler) ToggleLike(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, like)
+}
+
+func (h *PostHandler) GetLikeStatuses(c *gin.Context) {
+	var req dto.GetLikeStatusesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	userIDValue, exists := c.Get(middleware.ContextUserID)
+	userID, valid := userIDValue.(uint64)
+	if !exists || !valid {
+		_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
+		return
+	}
+
+	statuses, err := h.posts.GetLikeStatuses(
+		c.Request.Context(),
+		userID,
+		req,
+	)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, statuses)
 }

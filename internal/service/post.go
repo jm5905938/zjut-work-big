@@ -30,6 +30,11 @@ type PostRepository interface {
 		postID uint64,
 		userID uint64,
 	) (bool, error)
+	FindLikedPostIDs(
+		ctx context.Context,
+		userID uint64,
+		postIDs []uint64,
+	) ([]uint64, error)
 }
 
 type PostService struct {
@@ -175,6 +180,39 @@ func (s *PostService) ToggleLike(
 	return dto.LikePostResponse{
 		PostID:  postID,
 		IsLiked: isLiked,
+	}, nil
+}
+
+func (s *PostService) GetLikeStatuses(
+	ctx context.Context,
+	userID uint64,
+	req dto.GetLikeStatusesRequest,
+) (dto.GetLikeStatusesResponse, error) {
+	likedPostIDs, err := s.posts.FindLikedPostIDs(
+		ctx,
+		userID,
+		req.PostIDs,
+	)
+	if err != nil {
+		return dto.GetLikeStatusesResponse{}, apperror.Internal(err)
+	}
+
+	likedSet := make(map[uint64]struct{}, len(likedPostIDs))
+	for _, postID := range likedPostIDs {
+		likedSet[postID] = struct{}{}
+	}
+
+	statuses := make([]dto.PostLikeStatus, 0, len(req.PostIDs))
+	for _, postID := range req.PostIDs {
+		_, liked := likedSet[postID]
+		statuses = append(statuses, dto.PostLikeStatus{
+			PostID: postID,
+			Liked:  liked,
+		})
+	}
+
+	return dto.GetLikeStatusesResponse{
+		Status: statuses,
 	}, nil
 }
 

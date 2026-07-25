@@ -61,3 +61,16 @@ type LikePostResponse struct {
 	PostID  uint64 `json:"post_id"`
 	IsLiked bool   `json:"is_liked"`
 }
+
+type GetLikeStatusesRequest struct {
+	PostIDs []uint64 `json:"post_ids" binding:"required,min=1,max=100,dive,gt=0"`
+}
+
+type PostLikeStatus struct {
+	PostID uint64 `json:"post_id"`
+	Liked  bool   `json:"liked"`
+}
+
+type GetLikeStatusesResponse struct {
+	Status []PostLikeStatus `json:"status"`
+}

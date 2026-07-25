@@ -162,3 +162,21 @@ func (r *PostRepository) ToggleLike(
 
 	return isLiked, nil
 }
+
+func (r *PostRepository) FindLikedPostIDs(
+	ctx context.Context,
+	userID uint64,
+	postIDs []uint64,
+) ([]uint64, error) {
+	likedPostIDs := make([]uint64, 0)
+
+	err := r.db.WithContext(ctx).
+		Model(&model.PostLike{}).
+		Where("user_id = ? AND post_id IN ?", userID, postIDs).
+		Pluck("post_id", &likedPostIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return likedPostIDs, nil
+}
