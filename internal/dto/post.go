@@ -12,3 +12,28 @@ type PostResponse struct {
 	Author    UserResponse `json:"author"`
 	CreatedAt time.Time    `json:"created_at"`
 }
+
+type ListPostsQuery struct {
+	Page     int `form:"page" binding:"min=1"`
+	PageSize int `form:"page_size" binding:"min=1,max=100"`
+}
+
+type PostListItemResponse struct {
+	ID           uint64       `json:"id"`
+	Content      string       `json:"content"`
+	Author       UserResponse `json:"author"`
+	LikeCount    int64        `json:"like_count"`
+	CommentCount int64        `json:"comment_count"`
+	CreatedAt    time.Time    `json:"created_at"`
+}
+
+type PaginationMeta struct {
+	Page     int   `json:"page"`
+	PageSize int   `json:"page_size"`
+	Total    int64 `json:"total"`
+}
+
+type PostListResponse struct {
+	Items []PostListItemResponse `json:"items"`
+	Meta  PaginationMeta         `json:"meta"`
+}

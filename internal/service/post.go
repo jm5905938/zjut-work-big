@@ -12,6 +12,11 @@ import (
 type PostRepository interface {
 	Create(ctx context.Context, post *model.Post) error
 	FindByID(ctx context.Context, id uint64) (*model.Post, error)
+	List(
+		ctx context.Context,
+		page int,
+		pageSize int,
+	) ([]model.Post, int64, error)
 }
 
 type PostService struct {
@@ -57,5 +62,45 @@ func (s *PostService) Create(
 			Role:     createdPost.Author.Role,
 		},
 		CreatedAt: createdPost.CreatedAt,
+	}, nil
+}
+
+func (s *PostService) List(
+	ctx context.Context,
+	query dto.ListPostsQuery,
+) (dto.PostListResponse, error) {
+	posts, total, err := s.posts.List(
+		ctx,
+		query.Page,
+		query.PageSize,
+	)
+	if err != nil {
+		return dto.PostListResponse{}, apperror.Internal(err)
+	}
+
+	items := make([]dto.PostListItemResponse, 0, len(posts))
+	for _, post := range posts {
+		items = append(items, dto.PostListItemResponse{
+			ID:      post.ID,
+			Content: post.Content,
+			Author: dto.UserResponse{
+				ID:       post.Author.ID,
+				Username: post.Author.Username,
+				Name:     post.Author.Name,
+				Role:     post.Author.Role,
+			},
+			LikeCount:    post.LikeCount,
+			CommentCount: post.CommentCount,
+			CreatedAt:    post.CreatedAt,
+		})
+	}
+
+	return dto.PostListResponse{
+		Items: items,
+		Meta: dto.PaginationMeta{
+			Page:     query.Page,
+			PageSize: query.PageSize,
+			Total:    total,
+		},
 	}, nil
 }

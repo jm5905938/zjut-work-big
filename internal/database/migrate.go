@@ -11,6 +11,8 @@ func Migrate(db *gorm.DB) error {
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Post{},
+		&model.PostLike{},
+		&model.Comment{},
 	); err != nil {
 		return fmt.Errorf("迁移数据库失败: %w", err)
 	}

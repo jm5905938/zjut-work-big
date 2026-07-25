@@ -38,3 +38,33 @@ func (r *PostRepository) FindByID(
 
 	return &post, nil
 }
+
+func (r *PostRepository) List(
+	ctx context.Context,
+	page int,
+	pageSize int,
+) ([]model.Post, int64, error) {
+	posts := make([]model.Post, 0)
+	var total int64
+
+	db := r.db.WithContext(ctx).Model(&model.Post{})
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := db.
+		Select(`posts.*,
+			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count,
+			(SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) AS comment_count`).
+		Preload("Author").
+		Order("posts.created_at DESC").
+		Order("posts.id DESC").
+		Offset((page - 1) * pageSize).
+		Limit(pageSize).
+		Find(&posts).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return posts, total, nil
+}

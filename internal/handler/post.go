@@ -17,6 +17,10 @@ type PostService interface {
 		authorID uint64,
 		req dto.CreatePostRequest,
 	) (dto.PostResponse, error)
+	List(
+		ctx context.Context,
+		query dto.ListPostsQuery,
+	) (dto.PostListResponse, error)
 }
 
 type PostHandler struct {
@@ -55,4 +59,24 @@ func (h *PostHandler) Create(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusCreated, post)
+}
+
+func (h *PostHandler) List(c *gin.Context) {
+	query := dto.ListPostsQuery{
+		Page:     1,
+		PageSize: 20,
+	}
+
+	if err := c.ShouldBindQuery(&query); err != nil {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	posts, err := h.posts.List(c.Request.Context(), query)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, posts)
 }
