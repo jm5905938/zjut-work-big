@@ -44,6 +44,6 @@ func Auth(tokens TokenParser) gin.HandlerFunc {
 }
 
 func abortUnauthorized(c *gin.Context) {
-	_ = c.Error(apperror.Unauthorized("登录状态无效或已过期"))
+	_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
 	c.Abort()
 }

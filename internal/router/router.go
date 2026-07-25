@@ -13,8 +13,14 @@ type AuthHandler interface {
 	Login(c *gin.Context)
 }
 
+type PostHandler interface {
+	Create(c *gin.Context)
+}
+
 type Dependencies struct {
-	Auth AuthHandler
+	Auth   AuthHandler
+	Posts  PostHandler
+	Tokens middleware.TokenParser
 }
 
 func New(deps Dependencies) *gin.Engine {
@@ -38,6 +44,10 @@ func New(deps Dependencies) *gin.Engine {
 	auth := api.Group("/auth")
 	auth.POST("/register", deps.Auth.Register)
 	auth.POST("/login", deps.Auth.Login)
+
+	posts := api.Group("/posts")
+	posts.Use(middleware.Auth(deps.Tokens))
+	posts.POST("", deps.Posts.Create)
 
 	return r
 }
