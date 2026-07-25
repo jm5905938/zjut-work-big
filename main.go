@@ -8,7 +8,10 @@ import (
 	"github.com/jm5905938/zjut-work-big/internal/cache"
 	"github.com/jm5905938/zjut-work-big/internal/config"
 	"github.com/jm5905938/zjut-work-big/internal/database"
+	"github.com/jm5905938/zjut-work-big/internal/handler"
+	"github.com/jm5905938/zjut-work-big/internal/repository"
 	"github.com/jm5905938/zjut-work-big/internal/router"
+	"github.com/jm5905938/zjut-work-big/internal/service"
 )
 
 func main() {
@@ -44,9 +47,12 @@ func main() {
 		_ = redisClient.Close()
 	}()
 
+	userRepository := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepository)
+	authHandler := handler.NewAuthHandler(authService)
+
 	r := router.New(router.Dependencies{
-		DB:    db,
-		Redis: redisClient,
+		Auth: authHandler,
 	})
 
 	address := fmt.Sprintf(":%s", cfg.AppPort)

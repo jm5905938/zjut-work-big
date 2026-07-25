@@ -6,13 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jm5905938/zjut-work-big/internal/middleware"
 	"github.com/jm5905938/zjut-work-big/internal/response"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
+type AuthHandler interface {
+	Register(c *gin.Context)
+}
+
 type Dependencies struct {
-	DB    *gorm.DB
-	Redis *redis.Client
+	Auth AuthHandler
 }
 
 func New(deps Dependencies) *gin.Engine {
@@ -31,6 +32,10 @@ func New(deps Dependencies) *gin.Engine {
 			"redis":  "connected",
 		})
 	})
+
+	api := r.Group("/api/v1")
+	auth := api.Group("/auth")
+	auth.POST("/register", deps.Auth.Register)
 
 	return r
 }
