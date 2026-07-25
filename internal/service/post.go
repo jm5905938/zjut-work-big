@@ -35,6 +35,10 @@ type PostRepository interface {
 		userID uint64,
 		postIDs []uint64,
 	) ([]uint64, error)
+	CreateComment(
+		ctx context.Context,
+		comment *model.Comment,
+	) (*model.Comment, error)
 }
 
 type PostService struct {
@@ -213,6 +217,45 @@ func (s *PostService) GetLikeStatuses(
 
 	return dto.GetLikeStatusesResponse{
 		Status: statuses,
+	}, nil
+}
+
+func (s *PostService) CreateComment(
+	ctx context.Context,
+	postID uint64,
+	authorID uint64,
+	req dto.CreateCommentRequest,
+) (dto.CommentResponse, error) {
+	if strings.TrimSpace(req.Content) == "" {
+		return dto.CommentResponse{},
+			apperror.BadRequest("评论内容不能为空")
+	}
+
+	comment, err := s.posts.CreateComment(ctx, &model.Comment{
+		PostID:   postID,
+		AuthorID: authorID,
+		Content:  req.Content,
+	})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.CommentResponse{},
+				apperror.NotFound("帖子不存在")
+		}
+
+		return dto.CommentResponse{}, apperror.Internal(err)
+	}
+
+	return dto.CommentResponse{
+		ID:      comment.ID,
+		PostID:  comment.PostID,
+		Content: comment.Content,
+		Author: dto.UserResponse{
+			ID:       comment.Author.ID,
+			Username: comment.Author.Username,
+			Name:     comment.Author.Name,
+			Role:     comment.Author.Role,
+		},
+		CreatedAt: comment.CreatedAt,
 	}, nil
 }
 

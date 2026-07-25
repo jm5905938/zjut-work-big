@@ -41,6 +41,12 @@ type PostService interface {
 		userID uint64,
 		req dto.GetLikeStatusesRequest,
 	) (dto.GetLikeStatusesResponse, error)
+	CreateComment(
+		ctx context.Context,
+		postID uint64,
+		authorID uint64,
+		req dto.CreateCommentRequest,
+	) (dto.CommentResponse, error)
 }
 
 type PostHandler struct {
@@ -196,4 +202,38 @@ func (h *PostHandler) GetLikeStatuses(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, statuses)
+}
+
+func (h *PostHandler) CreateComment(c *gin.Context) {
+	postID, err := strconv.ParseUint(c.Param("post_id"), 10, 64)
+	if err != nil || postID == 0 {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	var req dto.CreateCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	authorIDValue, exists := c.Get(middleware.ContextUserID)
+	authorID, valid := authorIDValue.(uint64)
+	if !exists || !valid {
+		_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
+		return
+	}
+
+	comment, err := h.posts.CreateComment(
+		c.Request.Context(),
+		postID,
+		authorID,
+		req,
+	)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusCreated, comment)
 }

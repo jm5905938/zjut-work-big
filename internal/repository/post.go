@@ -180,3 +180,33 @@ func (r *PostRepository) FindLikedPostIDs(
 
 	return likedPostIDs, nil
 }
+
+func (r *PostRepository) CreateComment(
+	ctx context.Context,
+	comment *model.Comment,
+) (*model.Comment, error) {
+	var createdComment model.Comment
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var post model.Post
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("id").
+			First(&post, comment.PostID).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(comment).Error; err != nil {
+			return err
+		}
+
+		return tx.
+			Preload("Author").
+			First(&createdComment, comment.ID).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &createdComment, nil
+}

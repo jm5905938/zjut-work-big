@@ -20,6 +20,7 @@ type PostHandler interface {
 	DeleteOwn(c *gin.Context)
 	ToggleLike(c *gin.Context)
 	GetLikeStatuses(c *gin.Context)
+	CreateComment(c *gin.Context)
 }
 
 type Dependencies struct {
@@ -58,6 +59,7 @@ func New(deps Dependencies) *gin.Engine {
 	posts.DELETE("/:post_id", deps.Posts.DeleteOwn)
 	posts.POST("/:post_id/like", deps.Posts.ToggleLike)
 	posts.POST("/likes", deps.Posts.GetLikeStatuses)
+	posts.POST("/:post_id/comment", deps.Posts.CreateComment)
 
 	return r
 }

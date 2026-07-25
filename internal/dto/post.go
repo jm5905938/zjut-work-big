@@ -47,6 +47,10 @@ type CommentResponse struct {
 	CreatedAt time.Time    `json:"created_at"`
 }
 
+type CreateCommentRequest struct {
+	Content string `json:"content" binding:"required,min=1,max=1000"`
+}
+
 type PostDetailResponse struct {
 	ID           uint64            `json:"id"`
 	Content      string            `json:"content"`
