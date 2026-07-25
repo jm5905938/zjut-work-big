@@ -20,6 +20,11 @@ type PostRepository interface {
 		pageSize int,
 	) ([]model.Post, int64, error)
 	FindDetailByID(ctx context.Context, id uint64) (*model.Post, error)
+	DeleteByIDAndAuthorID(
+		ctx context.Context,
+		postID uint64,
+		authorID uint64,
+	) (bool, error)
 }
 
 type PostService struct {
@@ -112,6 +117,39 @@ func (s *PostService) GetByID(
 		CreatedAt:    post.CreatedAt,
 		Comments:     comments,
 	}, nil
+}
+
+func (s *PostService) DeleteOwn(
+	ctx context.Context,
+	postID uint64,
+	authorID uint64,
+) error {
+	post, err := s.posts.FindByID(ctx, postID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apperror.NotFound("帖子不存在")
+		}
+
+		return apperror.Internal(err)
+	}
+
+	if post.AuthorID != authorID {
+		return apperror.Forbidden("无权删除他人的帖子")
+	}
+
+	deleted, err := s.posts.DeleteByIDAndAuthorID(
+		ctx,
+		postID,
+		authorID,
+	)
+	if err != nil {
+		return apperror.Internal(err)
+	}
+	if !deleted {
+		return apperror.NotFound("帖子不存在")
+	}
+
+	return nil
 }
 
 func (s *PostService) List(

@@ -94,3 +94,18 @@ func (r *PostRepository) FindDetailByID(
 
 	return &post, nil
 }
+
+func (r *PostRepository) DeleteByIDAndAuthorID(
+	ctx context.Context,
+	postID uint64,
+	authorID uint64,
+) (bool, error) {
+	result := r.db.WithContext(ctx).
+		Where("id = ? AND author_id = ?", postID, authorID).
+		Delete(&model.Post{})
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return result.RowsAffected > 0, nil
+}

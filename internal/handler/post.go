@@ -26,6 +26,11 @@ type PostService interface {
 		ctx context.Context,
 		postID uint64,
 	) (dto.PostDetailResponse, error)
+	DeleteOwn(
+		ctx context.Context,
+		postID uint64,
+		authorID uint64,
+	) error
 }
 
 type PostHandler struct {
@@ -101,4 +106,30 @@ func (h *PostHandler) GetByID(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, post)
+}
+
+func (h *PostHandler) DeleteOwn(c *gin.Context) {
+	postID, err := strconv.ParseUint(c.Param("post_id"), 10, 64)
+	if err != nil || postID == 0 {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	authorIDValue, exists := c.Get(middleware.ContextUserID)
+	authorID, valid := authorIDValue.(uint64)
+	if !exists || !valid {
+		_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
+		return
+	}
+
+	if err := h.posts.DeleteOwn(
+		c.Request.Context(),
+		postID,
+		authorID,
+	); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, nil)
 }
