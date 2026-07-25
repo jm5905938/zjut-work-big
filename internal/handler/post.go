@@ -65,6 +65,7 @@ func (h *PostHandler) List(c *gin.Context) {
 	query := dto.ListPostsQuery{
 		Page:     1,
 		PageSize: 20,
+		Sort:     "latest",
 	}
 
 	if err := c.ShouldBindQuery(&query); err != nil {
