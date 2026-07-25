@@ -111,6 +111,19 @@ func (r *PostRepository) DeleteByIDAndAuthorID(
 	return result.RowsAffected > 0, nil
 }
 
+func (r *PostRepository) DeleteByID(
+	ctx context.Context,
+	postID uint64,
+) (bool, error) {
+	result := r.db.WithContext(ctx).
+		Delete(&model.Post{}, postID)
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return result.RowsAffected > 0, nil
+}
+
 func (r *PostRepository) ToggleLike(
 	ctx context.Context,
 	postID uint64,

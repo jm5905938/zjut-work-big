@@ -31,6 +31,7 @@ type PostService interface {
 		postID uint64,
 		authorID uint64,
 	) error
+	DeleteAny(ctx context.Context, postID uint64) error
 	ToggleLike(
 		ctx context.Context,
 		postID uint64,
@@ -142,6 +143,24 @@ func (h *PostHandler) DeleteOwn(c *gin.Context) {
 		c.Request.Context(),
 		postID,
 		authorID,
+	); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, nil)
+}
+
+func (h *PostHandler) DeleteAny(c *gin.Context) {
+	postID, err := strconv.ParseUint(c.Param("post_id"), 10, 64)
+	if err != nil || postID == 0 {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	if err := h.posts.DeleteAny(
+		c.Request.Context(),
+		postID,
 	); err != nil {
 		_ = c.Error(err)
 		return

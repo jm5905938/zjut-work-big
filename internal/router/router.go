@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jm5905938/zjut-work-big/internal/middleware"
+	"github.com/jm5905938/zjut-work-big/internal/model"
 	"github.com/jm5905938/zjut-work-big/internal/response"
 )
 
@@ -18,6 +19,7 @@ type PostHandler interface {
 	List(c *gin.Context)
 	GetByID(c *gin.Context)
 	DeleteOwn(c *gin.Context)
+	DeleteAny(c *gin.Context)
 	ToggleLike(c *gin.Context)
 	GetLikeStatuses(c *gin.Context)
 	CreateComment(c *gin.Context)
@@ -60,6 +62,13 @@ func New(deps Dependencies) *gin.Engine {
 	posts.POST("/:post_id/like", deps.Posts.ToggleLike)
 	posts.POST("/likes", deps.Posts.GetLikeStatuses)
 	posts.POST("/:post_id/comment", deps.Posts.CreateComment)
+
+	admin := api.Group("/admin")
+	admin.Use(
+		middleware.Auth(deps.Tokens),
+		middleware.RequireRole(model.UserRoleAdmin),
+	)
+	admin.DELETE("/posts/:post_id", deps.Posts.DeleteAny)
 
 	return r
 }

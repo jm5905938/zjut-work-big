@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jm5905938/zjut-work-big/internal/apperror"
+	"github.com/jm5905938/zjut-work-big/internal/model"
 	"github.com/jm5905938/zjut-work-big/internal/token"
 )
 
@@ -46,4 +47,23 @@ func Auth(tokens TokenParser) gin.HandlerFunc {
 func abortUnauthorized(c *gin.Context) {
 	_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
 	c.Abort()
+}
+
+func RequireRole(requiredRole model.UserRole) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roleValue, exists := c.Get(ContextUserRole)
+		role, valid := roleValue.(model.UserRole)
+		if !exists || !valid {
+			abortUnauthorized(c)
+			return
+		}
+
+		if role != requiredRole {
+			_ = c.Error(apperror.Forbidden("当前用户无此权限"))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
 }

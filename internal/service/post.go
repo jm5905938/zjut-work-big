@@ -25,6 +25,7 @@ type PostRepository interface {
 		postID uint64,
 		authorID uint64,
 	) (bool, error)
+	DeleteByID(ctx context.Context, postID uint64) (bool, error)
 	ToggleLike(
 		ctx context.Context,
 		postID uint64,
@@ -156,6 +157,21 @@ func (s *PostService) DeleteOwn(
 		postID,
 		authorID,
 	)
+	if err != nil {
+		return apperror.Internal(err)
+	}
+	if !deleted {
+		return apperror.NotFound("帖子不存在")
+	}
+
+	return nil
+}
+
+func (s *PostService) DeleteAny(
+	ctx context.Context,
+	postID uint64,
+) error {
+	deleted, err := s.posts.DeleteByID(ctx, postID)
 	if err != nil {
 		return apperror.Internal(err)
 	}
