@@ -25,6 +25,11 @@ type PostRepository interface {
 		postID uint64,
 		authorID uint64,
 	) (bool, error)
+	ToggleLike(
+		ctx context.Context,
+		postID uint64,
+		userID uint64,
+	) (bool, error)
 }
 
 type PostService struct {
@@ -150,6 +155,27 @@ func (s *PostService) DeleteOwn(
 	}
 
 	return nil
+}
+
+func (s *PostService) ToggleLike(
+	ctx context.Context,
+	postID uint64,
+	userID uint64,
+) (dto.LikePostResponse, error) {
+	isLiked, err := s.posts.ToggleLike(ctx, postID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.LikePostResponse{},
+				apperror.NotFound("帖子不存在")
+		}
+
+		return dto.LikePostResponse{}, apperror.Internal(err)
+	}
+
+	return dto.LikePostResponse{
+		PostID:  postID,
+		IsLiked: isLiked,
+	}, nil
 }
 
 func (s *PostService) List(

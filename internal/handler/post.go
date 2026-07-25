@@ -31,6 +31,11 @@ type PostService interface {
 		postID uint64,
 		authorID uint64,
 	) error
+	ToggleLike(
+		ctx context.Context,
+		postID uint64,
+		userID uint64,
+	) (dto.LikePostResponse, error)
 }
 
 type PostHandler struct {
@@ -132,4 +137,31 @@ func (h *PostHandler) DeleteOwn(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, nil)
+}
+
+func (h *PostHandler) ToggleLike(c *gin.Context) {
+	postID, err := strconv.ParseUint(c.Param("post_id"), 10, 64)
+	if err != nil || postID == 0 {
+		_ = c.Error(apperror.BadRequest("参数校验失败"))
+		return
+	}
+
+	userIDValue, exists := c.Get(middleware.ContextUserID)
+	userID, valid := userIDValue.(uint64)
+	if !exists || !valid {
+		_ = c.Error(apperror.Unauthorized("未登录或令牌无效"))
+		return
+	}
+
+	like, err := h.posts.ToggleLike(
+		c.Request.Context(),
+		postID,
+		userID,
+	)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, like)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jm5905938/zjut-work-big/internal/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const postWithCountsSelect = `posts.*,
@@ -108,4 +109,56 @@ func (r *PostRepository) DeleteByIDAndAuthorID(
 	}
 
 	return result.RowsAffected > 0, nil
+}
+
+func (r *PostRepository) ToggleLike(
+	ctx context.Context,
+	postID uint64,
+	userID uint64,
+) (bool, error) {
+	var isLiked bool
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var post model.Post
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("id").
+			First(&post, postID).Error; err != nil {
+			return err
+		}
+
+		var like model.PostLike
+		result := tx.
+			Where("post_id = ? AND user_id = ?", postID, userID).
+			Limit(1).
+			Find(&like)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			like = model.PostLike{
+				PostID: postID,
+				UserID: userID,
+			}
+			if err := tx.Create(&like).Error; err != nil {
+				return err
+			}
+
+			isLiked = true
+			return nil
+		}
+
+		if err := tx.Delete(&like).Error; err != nil {
+			return err
+		}
+
+		isLiked = false
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return isLiked, nil
 }

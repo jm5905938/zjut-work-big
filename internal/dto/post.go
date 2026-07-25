@@ -56,3 +56,8 @@ type PostDetailResponse struct {
 	CreatedAt    time.Time         `json:"created_at"`
 	Comments     []CommentResponse `json:"comments"`
 }
+
+type LikePostResponse struct {
+	PostID  uint64 `json:"post_id"`
+	IsLiked bool   `json:"is_liked"`
+}
