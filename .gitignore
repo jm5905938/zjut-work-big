@@ -1,0 +1,18 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go build and test outputs
+bin/
+tmp/
+*.test
+*.out
+coverage.out
+
+# Runtime logs
+logs/
+*.log
+
+# Operating system files
+.DS_Store
