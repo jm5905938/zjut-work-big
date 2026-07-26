@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "d9997519a94435f2",
+        "id": "e7ed87d2ea2da167",
         "type": "tabs",
         "children": [
           {
-            "id": "768a30686b54677c",
+            "id": "677ae47492a8d1b4",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -183,6 +183,8 @@
       "bases:新建数据库": false
     }
   },
-  "active": "768a30686b54677c",
-  "lastOpenFiles": []
+  "active": "677ae47492a8d1b4",
+  "lastOpenFiles": [
+    "README.md"
+  ]
 }
