@@ -43,6 +43,11 @@ func (s *AuthService) Register(
 	ctx context.Context,
 	req dto.RegisterRequest,
 ) (dto.UserResponse, error) {
+	if req.Role != model.UserRoleStudent {
+		return dto.UserResponse{},
+			apperror.Forbidden("不能直接注册管理员账号")
+	}
+
 	passwordHash, err := password.Hash(req.Password)
 	if err != nil {
 		return dto.UserResponse{}, apperror.Internal(err)
@@ -52,7 +57,7 @@ func (s *AuthService) Register(
 		Username:     req.Username,
 		Name:         req.Name,
 		PasswordHash: passwordHash,
-		Role:         req.Role,
+		Role:         model.UserRoleStudent,
 	}
 
 	if err := s.users.Create(ctx, user); err != nil {
