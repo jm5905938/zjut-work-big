@@ -9,6 +9,7 @@ import (
 	"github.com/jm5905938/zjut-work-big/internal/config"
 	"github.com/jm5905938/zjut-work-big/internal/database"
 	"github.com/jm5905938/zjut-work-big/internal/handler"
+	"github.com/jm5905938/zjut-work-big/internal/ratelimit"
 	"github.com/jm5905938/zjut-work-big/internal/repository"
 	"github.com/jm5905938/zjut-work-big/internal/router"
 	"github.com/jm5905938/zjut-work-big/internal/service"
@@ -55,11 +56,17 @@ func main() {
 	postService := service.NewPostService(postRepository)
 	authHandler := handler.NewAuthHandler(authService)
 	postHandler := handler.NewPostHandler(postService)
+	likeLimiter := ratelimit.NewLikeLimiter(
+		redisClient,
+		cfg.LikeRateLimit,
+		cfg.LikeRateWindow,
+	)
 
 	r := router.New(router.Dependencies{
-		Auth:   authHandler,
-		Posts:  postHandler,
-		Tokens: tokenManager,
+		Auth:        authHandler,
+		Posts:       postHandler,
+		Tokens:      tokenManager,
+		LikeLimiter: likeLimiter,
 	})
 
 	address := fmt.Sprintf(":%s", cfg.AppPort)

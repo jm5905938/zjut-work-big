@@ -26,9 +26,10 @@ type PostHandler interface {
 }
 
 type Dependencies struct {
-	Auth   AuthHandler
-	Posts  PostHandler
-	Tokens middleware.TokenParser
+	Auth        AuthHandler
+	Posts       PostHandler
+	Tokens      middleware.TokenParser
+	LikeLimiter middleware.LikeRateLimiter
 }
 
 func New(deps Dependencies) *gin.Engine {
@@ -59,7 +60,11 @@ func New(deps Dependencies) *gin.Engine {
 	posts.GET("", deps.Posts.List)
 	posts.GET("/:post_id", deps.Posts.GetByID)
 	posts.DELETE("/:post_id", deps.Posts.DeleteOwn)
-	posts.POST("/:post_id/like", deps.Posts.ToggleLike)
+	posts.POST(
+		"/:post_id/like",
+		middleware.LikeRateLimit(deps.LikeLimiter),
+		deps.Posts.ToggleLike,
+	)
 	posts.POST("/likes", deps.Posts.GetLikeStatuses)
 	posts.POST("/:post_id/comment", deps.Posts.CreateComment)
 

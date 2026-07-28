@@ -16,10 +16,12 @@ type Config struct {
 	MySQLUser     string
 	MySQLPassword string
 
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
-	RedisDB       int
+	RedisHost      string
+	RedisPort      string
+	RedisPassword  string
+	RedisDB        int
+	LikeRateLimit  int64
+	LikeRateWindow time.Duration
 
 	JWTSecret    string
 	JWTExpiresIn time.Duration
@@ -37,6 +39,8 @@ func Load() (*Config, error) {
 	v.SetDefault("REDIS_HOST", "127.0.0.1")
 	v.SetDefault("REDIS_PORT", "6379")
 	v.SetDefault("REDIS_DB", 0)
+	v.SetDefault("LIKE_RATE_LIMIT", 60)
+	v.SetDefault("LIKE_RATE_WINDOW", "1m")
 	v.SetDefault("JWT_EXPIRES_IN", "2h")
 
 	v.AutomaticEnv()
@@ -54,10 +58,12 @@ func Load() (*Config, error) {
 		MySQLUser:     v.GetString("MYSQL_USER"),
 		MySQLPassword: v.GetString("MYSQL_PASSWORD"),
 
-		RedisHost:     v.GetString("REDIS_HOST"),
-		RedisPort:     v.GetString("REDIS_PORT"),
-		RedisPassword: v.GetString("REDIS_PASSWORD"),
-		RedisDB:       v.GetInt("REDIS_DB"),
+		RedisHost:      v.GetString("REDIS_HOST"),
+		RedisPort:      v.GetString("REDIS_PORT"),
+		RedisPassword:  v.GetString("REDIS_PASSWORD"),
+		RedisDB:        v.GetInt("REDIS_DB"),
+		LikeRateLimit:  v.GetInt64("LIKE_RATE_LIMIT"),
+		LikeRateWindow: v.GetDuration("LIKE_RATE_WINDOW"),
 
 		JWTSecret:    v.GetString("JWT_SECRET"),
 		JWTExpiresIn: v.GetDuration("JWT_EXPIRES_IN"),
@@ -71,6 +77,9 @@ func Load() (*Config, error) {
 
 	if cfg.RedisPassword == "" {
 		return nil, fmt.Errorf("Redis 配置不完整")
+	}
+	if cfg.LikeRateLimit <= 0 || cfg.LikeRateWindow <= 0 {
+		return nil, fmt.Errorf("点赞限流配置无效")
 	}
 
 	if cfg.JWTSecret == "" || cfg.JWTExpiresIn <= 0 {

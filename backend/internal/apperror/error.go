@@ -50,6 +50,19 @@ func Conflict(message string) *Error {
 	return New(http.StatusConflict, 409, message, nil)
 }
 
+func TooManyRequests(message string) *Error {
+	return New(http.StatusTooManyRequests, 429, message, nil)
+}
+
+func ServiceUnavailable(message string, err error) *Error {
+	return New(
+		http.StatusServiceUnavailable,
+		503,
+		message,
+		err,
+	)
+}
+
 func Internal(err error) *Error {
 	return New(
 		http.StatusInternalServerError,
