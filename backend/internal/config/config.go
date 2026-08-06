@@ -8,7 +8,9 @@ import (
 )
 
 type Config struct {
-	AppPort string
+	AppPort  string
+	LogFile  string
+	LogLevel string
 
 	MySQLHost     string
 	MySQLPort     string
@@ -36,6 +38,8 @@ func Load() (*Config, error) {
 	v.SetConfigType("env")
 
 	v.SetDefault("APP_PORT", "8080")
+	v.SetDefault("LOG_FILE", "logs/app.log")
+	v.SetDefault("LOG_LEVEL", "debug")
 	v.SetDefault("MYSQL_HOST", "127.0.0.1")
 	v.SetDefault("MYSQL_PORT", "3306")
 	v.SetDefault("REDIS_HOST", "127.0.0.1")
@@ -52,7 +56,9 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		AppPort: v.GetString("APP_PORT"),
+		AppPort:  v.GetString("APP_PORT"),
+		LogFile:  v.GetString("LOG_FILE"),
+		LogLevel: v.GetString("LOG_LEVEL"),
 
 		MySQLHost:     v.GetString("MYSQL_HOST"),
 		MySQLPort:     v.GetString("MYSQL_PORT"),

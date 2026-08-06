@@ -3,6 +3,8 @@ package middleware
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,7 +76,7 @@ func TestLikeRateLimit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := gin.New()
-			r.Use(ErrorHandler())
+			r.Use(ErrorHandler(slog.New(slog.NewTextHandler(io.Discard, nil))))
 
 			handlerCalled := false
 			r.POST(

@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/gin-gonic/gin/binding"
 	"github.com/jm5905938/zjut-work-big/internal/cache"
 	"github.com/jm5905938/zjut-work-big/internal/config"
 	"github.com/jm5905938/zjut-work-big/internal/database"
 	"github.com/jm5905938/zjut-work-big/internal/handler"
+	"github.com/jm5905938/zjut-work-big/internal/logger"
 	"github.com/jm5905938/zjut-work-big/internal/ratelimit"
 	"github.com/jm5905938/zjut-work-big/internal/repository"
 	"github.com/jm5905938/zjut-work-big/internal/router"
@@ -24,18 +26,30 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := database.OpenMySQL(cfg)
+	appLogger, logFile, err := logger.New(cfg.LogFile, cfg.LogLevel)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		_ = logFile.Close()
+	}()
+	slog.SetDefault(appLogger)
+
+	db, err := database.OpenMySQL(cfg)
+	if err != nil {
+		appLogger.Error("MySQL 初始化失败", "error", err)
+		return
+	}
 
 	if err := database.Migrate(db); err != nil {
-		log.Fatal(err)
+		appLogger.Error("数据库迁移失败", "error", err)
+		return
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatal(err)
+		appLogger.Error("获取数据库连接失败", "error", err)
+		return
 	}
 	defer func() {
 		_ = sqlDB.Close()
@@ -43,7 +57,8 @@ func main() {
 
 	redisClient, err := cache.OpenRedis(cfg)
 	if err != nil {
-		log.Fatal(err)
+		appLogger.Error("Redis 初始化失败", "error", err)
+		return
 	}
 	defer func() {
 		_ = redisClient.Close()
@@ -71,12 +86,16 @@ func main() {
 		Posts:       postHandler,
 		Tokens:      tokenManager,
 		LikeLimiter: likeLimiter,
+		Logger:      appLogger,
 	})
 
 	address := fmt.Sprintf(":%s", cfg.AppPort)
-	log.Printf("服务器启动：http://127.0.0.1%s", address)
+	appLogger.Info(
+		"服务器启动",
+		"address", fmt.Sprintf("http://127.0.0.1%s", address),
+	)
 
 	if err := r.Run(address); err != nil {
-		log.Fatal("服务器启动失败：", err)
+		appLogger.Error("服务器启动失败", "error", err)
 	}
 }

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,15 +31,16 @@ type Dependencies struct {
 	Posts       PostHandler
 	Tokens      middleware.TokenParser
 	LikeLimiter middleware.LikeRateLimiter
+	Logger      *slog.Logger
 }
 
 func New(deps Dependencies) *gin.Engine {
 	r := gin.New()
 
 	r.Use(
-		gin.Logger(),
-		middleware.Recovery(),
-		middleware.ErrorHandler(),
+		middleware.RequestLog(deps.Logger),
+		middleware.Recovery(deps.Logger),
+		middleware.ErrorHandler(deps.Logger),
 	)
 
 	r.GET("/health", func(c *gin.Context) {
