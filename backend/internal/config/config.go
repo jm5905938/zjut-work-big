@@ -25,6 +25,8 @@ type Config struct {
 
 	JWTSecret    string
 	JWTExpiresIn time.Duration
+
+	AdminRegisterCode string
 }
 
 func Load() (*Config, error) {
@@ -67,6 +69,8 @@ func Load() (*Config, error) {
 
 		JWTSecret:    v.GetString("JWT_SECRET"),
 		JWTExpiresIn: v.GetDuration("JWT_EXPIRES_IN"),
+
+		AdminRegisterCode: v.GetString("ADMIN_REGISTER_CODE"),
 	}
 
 	if cfg.MySQLDatabase == "" ||

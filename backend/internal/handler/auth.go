@@ -14,6 +14,7 @@ type AuthService interface {
 	Register(
 		ctx context.Context,
 		req dto.RegisterRequest,
+		adminRegisterCode string,
 	) (dto.UserResponse, error)
 	Login(
 		ctx context.Context,
@@ -44,6 +45,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	user, err := h.auth.Register(
 		c.Request.Context(),
 		req,
+		c.GetHeader("X-Admin-Register-Code"),
 	)
 	if err != nil {
 		_ = c.Error(err)

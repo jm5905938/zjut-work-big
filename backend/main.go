@@ -52,7 +52,11 @@ func main() {
 	userRepository := repository.NewUserRepository(db)
 	postRepository := repository.NewPostRepository(db)
 	tokenManager := token.NewJWTManager(cfg.JWTSecret, cfg.JWTExpiresIn)
-	authService := service.NewAuthService(userRepository, tokenManager)
+	authService := service.NewAuthService(
+		userRepository,
+		tokenManager,
+		cfg.AdminRegisterCode,
+	)
 	postService := service.NewPostService(postRepository)
 	authHandler := handler.NewAuthHandler(authService)
 	postHandler := handler.NewPostHandler(postService)

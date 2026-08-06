@@ -25,27 +25,33 @@ type TokenGenerator interface {
 }
 
 type AuthService struct {
-	users  UserRepository
-	tokens TokenGenerator
+	users             UserRepository
+	tokens            TokenGenerator
+	adminRegisterCode string
 }
 
 func NewAuthService(
 	users UserRepository,
 	tokens TokenGenerator,
+	adminRegisterCode string,
 ) *AuthService {
 	return &AuthService{
-		users:  users,
-		tokens: tokens,
+		users:             users,
+		tokens:            tokens,
+		adminRegisterCode: adminRegisterCode,
 	}
 }
 
 func (s *AuthService) Register(
 	ctx context.Context,
 	req dto.RegisterRequest,
+	providedAdminRegisterCode string,
 ) (dto.UserResponse, error) {
-	if req.Role != model.UserRoleStudent {
+	if req.Role == model.UserRoleAdmin &&
+		(s.adminRegisterCode == "" ||
+			providedAdminRegisterCode != s.adminRegisterCode) {
 		return dto.UserResponse{},
-			apperror.Forbidden("不能直接注册管理员账号")
+			apperror.Forbidden("管理员注册码错误")
 	}
 
 	passwordHash, err := password.Hash(req.Password)
@@ -57,7 +63,7 @@ func (s *AuthService) Register(
 		Username:     req.Username,
 		Name:         req.Name,
 		PasswordHash: passwordHash,
-		Role:         model.UserRoleStudent,
+		Role:         req.Role,
 	}
 
 	if err := s.users.Create(ctx, user); err != nil {
